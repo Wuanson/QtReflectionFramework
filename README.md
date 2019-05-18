@@ -1,0 +1,2 @@
+# QtReflectionFramework
+一个基于Qt的反射功能的框架
