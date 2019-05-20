@@ -26,7 +26,7 @@ public:
      * @param params     参数
      * @return           如果方法存在返回 true
      */
-    bool invokeMethod(class SocketToken *token, const QString& systemName, const QString& methodName, class QJsonObject& params);
+    bool invokeMethod(class SocketToken *token, const QString& systemName, const QString& methodName, QJsonObject& params);
 
     /**
      * @brief insertSystem 添加一个 System

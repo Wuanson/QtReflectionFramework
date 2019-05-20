@@ -116,6 +116,20 @@ public:
 
     static void iterateObjectProperty(const QMetaObject& metaObject, std::function<bool(const QMetaProperty& property)> callBack);
 
+    /**
+     * @brief getMetaProperty 通过 propertyName 查找 property
+     * @param metaObject
+     * @param propertyName
+     * @param retProperty
+     * @return 找到 property 返回 true
+     */
+    static bool getMetaProperty(const QMetaObject& metaObject, const QString& propertyName, QMetaProperty& retProperty);
+
+    /**
+     * @brief isNormalType 类型是否为基本数据类型
+     * @param metaType
+     * @return
+     */
     static bool isNormalType(const class QMetaType& metaType);
 
     static bool isNormalType(const QMetaObject& metaObject);

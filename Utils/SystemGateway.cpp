@@ -9,6 +9,7 @@
 
 #include "ReflectionFramework/QMetaObjectHelper.h"
 #include "Utils/Interface/ISystem.h"
+#include "Utils/Interface/IEntity.h"
 #include "NetCore/SocketToken.h"
 #include "NetCore/SocketError.h"
 #include "NetCore/NodeSocketModel.h"
@@ -62,16 +63,36 @@ bool SystemGateway::invokeMethod(SocketToken *token, const QString &systemName, 
                 QMetaType type(typeId);
                 if(type.isValid())
                 {
-                    QString typeName = names[i];
-                    if(params.contains(typeName))
+                    if(QMetaObjectHelper::isNormalType(type))
                     {
-                        vars[i] = params.take(typeName).toVariant();
-                        if(vars[i].canConvert(typeId))
+                        QString typeName = names[i];
+                        if(params.contains(typeName))
                         {
-                            vars[i].convert(typeId);
+                            vars[i] = params.take(typeName).toVariant();
+                            if(vars[i].canConvert(typeId))
+                            {
+                                vars[i].convert(typeId);
+                            }
+                            args[i] = QGenericArgument(vars[i].typeName(), vars[i].data());
                         }
-                        args[i] = QGenericArgument(vars[i].typeName(), vars[i].data());
                     }
+                    else
+                    {
+                        QObject* data = QMetaObjectHelper::createQObject(true, *type.metaObject());
+                        IEntity* entity = dynamic_cast<IEntity*>(data);
+                        if(entity)
+                        {
+                            QString typeName = names[i];
+                            auto jsonObject = params.take(typeName).toObject();
+                            entity->fromJson(jsonObject);
+                            vars[i] = QVariant::fromValue(data);
+                        }
+                        else
+                        {
+                            qDebug()<<"函数的参数只能为普通数据类型或者继承于IEntity的指针类型!";
+                        }
+                    }
+                    args[i] = QGenericArgument(vars[i].typeName(), vars[i].data());
                 }
             }
 
@@ -91,12 +112,29 @@ bool SystemGateway::invokeMethod(SocketToken *token, const QString &systemName, 
                     QGenericReturnArgument returnArg(retValue.typeName(), &retValue);
                     if(method.invoke(system, Qt::ConnectionType::DirectConnection, returnArg, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]))
                     {
-                        if(retValue.convert(method.returnType()) && retValue.isValid())
+                        if(retValue.isValid())
                         {
                             NodeSocketModel retModel;
                             retModel.setSystemName(systemName);
                             retModel.setMethodName(methodName);
-                            retModel.insertData("data", retValue.toString());
+                            if(QMetaObjectHelper::isNormalType(QMetaType::type(retValue.typeName())))
+                            {
+                                retModel.insertData("data", retValue.toString());
+                            }
+                            else
+                            {
+                                QObject* object = retValue.value<QObject*>();
+                                IEntity* entity = dynamic_cast<IEntity*>(object);
+                                if(entity)
+                                {
+                                    retModel.insertData("data", entity->toJson());
+                                }
+                                else
+                                {
+                                    retModel.insertData("data", "");
+                                    retModel.setErrorCode(ERR_RET_ERR);
+                                }
+                            }
                             retModel.writeToSocket(token);
                         }
                     }
@@ -173,7 +211,7 @@ bool SystemGateway::findMethod(const QString &systemName, const QString &methodN
 {
     if(!m_systems.contains(systemName))
     {
-        qWarning()<< "没有找到 System :"<< systemName;
+        qWarning()<< "没有找到 System :"<< systemName <<" 可能是没有使用REG_QCLASS注册!或者没有加上Q_SYSTEM标记";
     }
     else
     {

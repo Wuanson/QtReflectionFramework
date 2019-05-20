@@ -13,9 +13,12 @@ class WebControllerInit : public QObject
     Q_REF_INIT
 public:
     Q_INVOKABLE explicit WebControllerInit(QObject *parent = nullptr);
+    ~WebControllerInit();
 
 protected:
+    void initModels();
     void initControllers();
+    void injectControllerModel(QObject *object, bool showAssert = true);
 };
 
 #endif

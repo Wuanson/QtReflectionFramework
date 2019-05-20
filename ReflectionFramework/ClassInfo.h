@@ -6,7 +6,7 @@
   */
 
 
-#define KEY_MODEL_NAME      "K_ModelName"
+#define KEY_MODEL_NAMES      "K_ModelNames"
 #define KEY_VIEW_NAME       "K_ViewName"
 #define KEY_VIEW_URL        "K_ViewUrl"
 #define KEY_REF_INIT        "K_ReflectionInit"
@@ -38,9 +38,9 @@
 #define Q_SYSTEM                    Q_CLASSINFO(KEY_SYSTEM,"true")
 
 /**
-  *@brief Q_MODEL_NAME 标记Model的Property名称
+  *@brief Q_MODEL_NAMES 标记 Model 的 Property 名称 多个名称之间使用 ; 号隔开
   */
-#define Q_MODEL_NAME(NAME)          Q_CLASSINFO(KEY_MODEL_NAME,#NAME)
+#define Q_MODEL_NAMES(NAME)          Q_CLASSINFO(KEY_MODEL_NAMES,#NAME)
 
 /**
   *@brief Q_VIEW_NAME 标记QML的名称

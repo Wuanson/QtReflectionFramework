@@ -183,6 +183,19 @@ void QMetaObjectHelper::iterateObjectProperty(const QMetaObject &metaObject, std
     }
 }
 
+bool QMetaObjectHelper::getMetaProperty(const QMetaObject &metaObject, const QString &propertyName, QMetaProperty &retProperty)
+{
+    for(int i = 0; i < metaObject.propertyCount(); ++i)
+    {
+        if(propertyName == metaObject.property(i).name())
+        {
+            retProperty = metaObject.property(i);
+            return true;
+        }
+    }
+    return false;
+}
+
 bool QMetaObjectHelper::isNormalType(const QMetaType &metaType)
 {
     return  isNormalType(metaType.id());

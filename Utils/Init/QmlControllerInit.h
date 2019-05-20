@@ -10,7 +10,7 @@
 class QmlControllerInit : public QObject
 {
     Q_OBJECT
-    Q_SYSTEM
+    Q_REF_INIT
 
 public:
     Q_INVOKABLE explicit QmlControllerInit(QObject *parent = nullptr);

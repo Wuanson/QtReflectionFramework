@@ -5,18 +5,13 @@
 #include <QSettings>
 #include <QDebug>
 
-#include "Utils/MessageCenter.h"
-
 AModel::AModel(QObject *parent)
     : QObject (parent)
 {
-    MessageCenter::instance()->registerReceiver("saveSettings", this);
-    MessageCenter::instance()->registerReceiver("loadSettings", this);
 }
 
 AModel::~AModel()
 {
-    MessageCenter::instance()->unRegisterReceiver(this);
 }
 
 void AModel::loadSettings(QSettings *settings)
@@ -25,7 +20,7 @@ void AModel::loadSettings(QSettings *settings)
     {
         return ;
     }
-qDebug()<<metaObject()->className()<<__FUNCTION__;
+    qDebug()<<metaObject()->className()<<__FUNCTION__;
     QString className = metaObject()->className();
     className += "/";
     for(int i = 0; i < metaObject()->propertyCount(); i++)
@@ -46,7 +41,7 @@ void AModel::saveSettings(QSettings *settings)
     {
         return ;
     }
-qDebug()<<metaObject()->className()<<__FUNCTION__;
+    qDebug()<<metaObject()->className()<<__FUNCTION__;
     QString className = metaObject()->className();
     className += "/";
     for(int i = 0; i < metaObject()->propertyCount(); i++)
@@ -59,18 +54,4 @@ qDebug()<<metaObject()->className()<<__FUNCTION__;
     }
 
     settings->sync();
-}
-
-bool AModel::MessageReceiver(const QString &message, const QVariant &data)
-{
-    qDebug()<<metaObject()->className()<<__FUNCTION__;
-    if("saveSettings" == message)
-    {
-        saveSettings(data.value<QSettings*>());
-    }else if("loadSettings" == message)
-    {
-        loadSettings(data.value<QSettings*>());
-    }
-
-    return false;
 }
