@@ -2,6 +2,7 @@
 
 #include <QDebug>
 #include <QSettings>
+#include <QTimer>
 
 #include "Interface/AModel.h"
 
@@ -9,12 +10,18 @@ ModelCollection::ModelCollection()
  : m_settings(new QSettings("config.ini", QSettings::Format::IniFormat, nullptr))
 {
     m_modelMap.clear();
+
+    //5min 保存一次数据
+    QTimer* timer = new QTimer();
+    timer->start(50000);
+    QObject::connect(timer, &QTimer::timeout, [&]()
+    {
+        this->saveSettings();
+    });
 }
 
 ModelCollection::~ModelCollection()
 {
-    saveSettings();
-
     m_settings->sync();
     m_settings->deleteLater();
     m_settings = nullptr;

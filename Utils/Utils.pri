@@ -11,6 +11,7 @@ SOURCES += \
     $$PWD/Interface/AModel.cpp \
     $$PWD/ModelCollection.cpp \
     $$PWD/QDebugMessageToFile.cpp \
+    $$PWD/QJsonHelper.cpp \
     $$PWD/SingleApplication.cpp \
     $$PWD/SystemGateway.cpp
 
@@ -27,13 +28,13 @@ HEADERS += \
     $$PWD/Init/QmlControllerInit.h \
     $$PWD/Init/WebControllerInit.h \
     $$PWD/Interface/AModel.h \
-    $$PWD/Interface/IEntity.h \
     $$PWD/Interface/ISystem.h \
     $$PWD/Interface/IView.h \
     $$PWD/IMessageReceiver.h \
     $$PWD/MessageCenter.h \
     $$PWD/ModelCollection.h \
     $$PWD/QDebugMessageToFile.h \
+    $$PWD/QJsonHelper.h \
     $$PWD/SingleApplication.h \
     $$PWD/Singleton.h \
     $$PWD/SystemGateway.h

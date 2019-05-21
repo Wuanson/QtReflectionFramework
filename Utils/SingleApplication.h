@@ -42,6 +42,12 @@ public:
     int run();
 #endif
 
+    /**
+     * @brief setAutoStart 设置开机自启
+     * @param isAutoStart true 为开机自启 false 取消开机自启
+     */
+    void setAutoStart(bool isAutoStart);
+
 signals:
 
 public slots:

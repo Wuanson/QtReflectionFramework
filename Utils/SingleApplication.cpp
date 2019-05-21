@@ -2,6 +2,8 @@
 
 #include <QtNetwork/QLocalSocket>
 #include <QtNetwork/QLocalServer>
+#include <QSettings>
+#include <QDir>
 #include <QDebug>
 #ifdef IS_QML
 #include <QQmlApplicationEngine>
@@ -31,22 +33,50 @@ void gLogMsgOutput(QtMsgType type, const QMessageLogContext &context, const QStr
 }
 #endif
 #endif
+#include "Utils/ModelCollection.h"
 
 //初始化LocalServer的名字
-const QString SingleApplication::m_serverName = "HymsonTool";
+const QString SingleApplication::m_serverName = "HymsonToolServer@!@#%$%^^&*()";
 
 SingleApplication::SingleApplication(int &argc, char **argv)
 #ifdef IS_QML
     : QGuiApplication(argc, argv)
-#elif IS_QWIDGET
+    #elif IS_QWIDGET
     : QApplication(argc, argv)
-#else
+    #else
     : QCoreApplication(argc, argv)
-#endif
+    #endif
     , _isRunning(false)
     , m_localServer(nullptr)
 {
-    initLocalConnection();
+
+    for(int i = 0; i < argc; ++i)
+    {
+#if QT_NO_DEBUG
+        if(QStringLiteral("autoStart") == argv[i])
+        {
+            setAutoStart(true);
+            continue ;
+        }
+        else if(QStringLiteral("disableAutoStart") == argv[i])
+        {
+            setAutoStart(false);
+            continue ;
+        }
+#endif
+    }
+
+#if QT_NO_DEBUG
+    qDebug()<<"参数 autoStart 打开开机自启, disableAutoStart 关闭开机自启";
+#endif
+
+    if(initLocalConnection())
+    {
+        connect(this, &SingleApplication::aboutToQuit, [&]()
+        {
+            ModelCollection::instance()->saveSettings();
+        });
+    }
 }
 
 bool SingleApplication::isRunning()
@@ -100,7 +130,6 @@ int SingleApplication::run()
         return exec();
 #else
         initReflection();
-        qDebug()<<"Server Is Running...(Press Ctrl+C Exit Server)";
         return exec();
 #endif
     }
@@ -147,9 +176,9 @@ void SingleApplication::newLocalConnection()
 }
 
 void SingleApplication::initReflection(
-#ifdef IS_QML
+        #ifdef IS_QML
         QQmlApplicationEngine *qmlAppEngine
-#endif
+        #endif
         )
 {
     QObject parent;
@@ -236,10 +265,63 @@ void SingleApplication::newLocalServer()
         // 此时监听失败，可能是程序崩溃时,残留进程服务导致的,移除之
         if(m_localServer->serverError() == QAbstractSocket::AddressInUseError)
         {
-            qDebug()<<"listen error = QAbstractSocket::AddressInUseError";
+            qCritical()<<"listen error = QAbstractSocket::AddressInUseError";
             qDebug()<<"relisten...";
             QLocalServer::removeServer(m_serverName); // <-- 重点
             m_localServer->listen(m_serverName); // 再次监听
         }
     }
+}
+
+
+void SingleApplication::setAutoStart(bool isAutoStart)
+{
+    qDebug()<<__FUNCTION__<<":"<<isAutoStart;
+
+#if QT_NO_DEBUG
+#ifdef Q_OS_WIN32
+    QSettings reg("HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",QSettings::NativeFormat);
+    QString appPath = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
+    QString appName = QCoreApplication::applicationName();
+
+    if(isAutoStart)
+    {
+        reg.setValue(appName,appPath);
+    }
+    else
+    {
+        reg.remove(appName);
+    }
+#endif
+
+#ifdef Q_OS_LINUX
+    //TODO 写.desktop文件, 到/etc/xdg/autostart目录下
+#endif
+
+#ifdef Q_OS_MACOS
+    if (isAutoStart){
+        LSSharedFileListRef loginItems = LSSharedFileListCreate(NULL, kLSSharedFileListSessionLoginItems, NULL);
+        CFURLRef url = (CFURLRef)[NSURL fileURLWithPath:QStringToNSString(appPath)];
+        LSSharedFileListItemRef item = LSSharedFileListInsertItemURL(loginItems, kLSSharedFileListItemLast, NULL, NULL, url, NULL, NULL);
+        CFRelease(item);
+        CFRelease(loginItems);
+    }else{
+        UInt32 seedValue;
+        CFURLRef thePath;
+        LSSharedFileListRef loginItems = LSSharedFileListCreate(NULL, kLSSharedFileListSessionLoginItems, NULL);
+        CFArrayRef loginItemsArray = LSSharedFileListCopySnapshot(loginItems, &seedValue);
+        for (id item in (NSArray *)loginItemsArray) {
+            LSSharedFileListItemRef itemRef = (LSSharedFileListItemRef)item;
+            if (LSSharedFileListItemResolve(itemRef, 0, (CFURLRef*) &thePath, NULL) == noErr){
+                if ([[(NSURL *)thePath path] hasPrefix:QStringToNSString(appPath)]){
+                    LSSharedFileListItemRemove(loginItems, itemRef);
+                }
+                CFRelease(thePath);
+            }
+        }
+        CFRelease(loginItemsArray);
+        CFRelease(loginItems);
+    }
+#endif
+#endif
 }

@@ -9,10 +9,10 @@
 
 #include "ReflectionFramework/QMetaObjectHelper.h"
 #include "Utils/Interface/ISystem.h"
-#include "Utils/Interface/IEntity.h"
 #include "NetCore/SocketToken.h"
 #include "NetCore/SocketError.h"
 #include "NetCore/NodeSocketModel.h"
+#include "Utils/QJsonHelper.h"
 
 SystemGateway::SystemGateway()
 {
@@ -79,18 +79,11 @@ bool SystemGateway::invokeMethod(SocketToken *token, const QString &systemName, 
                     else
                     {
                         QObject* data = QMetaObjectHelper::createQObject(true, *type.metaObject());
-                        IEntity* entity = dynamic_cast<IEntity*>(data);
-                        if(entity)
-                        {
-                            QString typeName = names[i];
-                            auto jsonObject = params.take(typeName).toObject();
-                            entity->fromJson(jsonObject);
-                            vars[i] = QVariant::fromValue(data);
-                        }
-                        else
-                        {
-                            qDebug()<<"函数的参数只能为普通数据类型或者继承于IEntity的指针类型!";
-                        }
+
+                        QString typeName = names[i];
+                        auto jsonObject = params.take(typeName).toObject();
+                        QJsonHelper::fromJson(data, jsonObject);
+                        vars[i] = QVariant::fromValue(data);
                     }
                     args[i] = QGenericArgument(vars[i].typeName(), vars[i].data());
                 }
@@ -124,10 +117,10 @@ bool SystemGateway::invokeMethod(SocketToken *token, const QString &systemName, 
                             else
                             {
                                 QObject* object = retValue.value<QObject*>();
-                                IEntity* entity = dynamic_cast<IEntity*>(object);
-                                if(entity)
+                                object = dynamic_cast<QObject*>(object);
+                                if(object)
                                 {
-                                    retModel.insertData("data", entity->toJson());
+                                    retModel.insertData("data", QJsonHelper::toJson(object));
                                 }
                                 else
                                 {
